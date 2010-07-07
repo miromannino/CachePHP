@@ -13,7 +13,7 @@
 	$s->removeDependance(array('prova1.txt', 'prova3.txt'));
 	$s->addDependance(array('prova1.txt', 'prova3.txt', 'prova4.txt'));
 	
-	/* Now the array is: ([0] => prova2.txt, [1] => prova4.txt, [2] => prova1.txt, [3] => prova3.txt) */
+	/* Dependance: ('prova2.txt', 'prova4.txt', 'prova1.txt', 'prova3.txt') */
 	
 	/*
 	if($s->get($c)){
@@ -22,20 +22,25 @@
 	}else{
 		echo 'cache miss!<br/>';
 		$t = time() . ' ' . file_get_contents('prova.txt');
-		echo $t;
 		$s->put($t);
+		echo $t;
 	}
 	*/
 	
+	/*
 	if($s->get($c)){
 		echo 'cache hit!<br/>';
 		echo $c;
 	}else{
 		echo 'cache miss!<br/>';
 		$s->beginOutput();
-		$t = time();
-		echo $t;
+		echo time();
 		$s->endOutput();
 	}
+*/
 
-?>
+
+	if($s->printOrBegin()){
+		echo time();
+		$s->endOutput();
+	}?>

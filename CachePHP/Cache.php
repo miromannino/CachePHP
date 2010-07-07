@@ -119,8 +119,6 @@ class CachePHP_Cache {
 		$this->cacheFileFolderPath = $this->cacheFolder;
 		if ($subSection != null) $this->cacheFileFolderPath .= '/' . $subSection;
 		$this->cacheFilePath = $this->cacheFileFolderPath . '/' . $key;
-		$this->deadLine = 0;
-		$this->dependance = null;
 		return true;
 	}
 	
@@ -166,8 +164,6 @@ class CachePHP_Cache {
 	}
 	
 	public function get(&$content){
-		$content = '';
-		
 		if ($this->cacheFilePath == null) throw new Exception('cacheFile is not set');
 		
 		clearstatcache();
@@ -208,15 +204,25 @@ class CachePHP_Cache {
 		return (@file_put_contents($this->cacheFilePath, $content, LOCK_EX)) ? true : false;
 	}
 	
+	public function printOrBegin(){
+		if ($this->get($c)){
+			echo($c);
+			return false;
+		}else{
+			ob_start();
+			ob_implicit_flush(false);
+			return true;
+		}
+	}
+
 	public function beginOutput(){
 		ob_start();
 		ob_implicit_flush(false);
 	}
 	
 	public function endOutput(){
-		$o = ob_get_clean();
+		$o = ob_get_flush();
 		$this->put($o);
-		echo($o);
 	}
 	
 	public function extendValidity(){

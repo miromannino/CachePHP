@@ -20,13 +20,13 @@
  * chiamata della funzione.
  * 
  * Una volta che è richiesto un file questo file può non essere più valido
- * perchè ha superato il timeToInvalidate. Il timeToInvalidate non è un opzione
- * statica ma viene scelta chiamando la funzione setTimeToInvalidate
+ * perchè ha superato il deadLine. Il deadLine non è un opzione
+ * statica ma viene scelta chiamando la funzione setDeadLine
  *  
- * Il file può anche dipendere da altri file oltre che dal timeToInvalidate
+ * Il file può anche dipendere da altri file oltre che dal deadLine
  * e quindi in questo viene fatto l'ulteriore verifica che il file sia
  * più recente dei file da cui dipende. La lista dei file viene scelta
- * chiamando la funzione setDependFile
+ * chiamando la funzione setDependance
  * 
  */
 
@@ -88,13 +88,13 @@ class CachePHP_Cache {
 	 * Nel caso sia 0 il file è sempre valido e quindi non viene mai eliminato
 	 * Nel caso sia un valore maggiore di timeToLive il valore viene settato a 0
 	 * */
-	private $timeToInvalidate = 0;
+	private $deadLine = 0;
 	
 	/**
 	 * I file da cui dipende il file di cache. Se è null vuol dire che non
 	 * dipende da nessun file.
 	 */
-	private $dependFile = null;
+	private $dependance = null;
 	
 	/*----------------------------------------------------------------*/
 	
@@ -119,19 +119,50 @@ class CachePHP_Cache {
 		$this->cacheFileFolderPath = $this->cacheFolder;
 		if ($subSection != null) $this->cacheFileFolderPath .= '/' . $subSection;
 		$this->cacheFilePath = $this->cacheFileFolderPath . '/' . $key;
-		$this->timeToInvalidate = 0;
-		$this->dependFile = null;
+		$this->deadLine = 0;
+		$this->dependance = null;
 		return true;
 	}
 	
-	public function setTimeToInvalidate($tti){
-		if ($tti < 0) throw new Exception('timeToInvalidate must be a valid time number');
-		$this->timeToInvalidate = $tti;
+	public function setDeadLine($tti){
+		if ($tti < 0) throw new Exception('deadLine must be a valid time number');
+		$this->deadLine = $tti;
 	}
 	
-	public function setDependFile($arrFile = null){
-		if ($arrFile != null && !is_array($arrFile)) throw new Exception('array required');
-		$this->dependFile = $arrFile;
+	public function setDependance($dep){
+		if ($dep == null) $this->dependance = null;
+		else if (is_array($dep)) $this->dependance = $dep;
+		else if (is_string($dep)) $this->dependance = array($dep);
+		else throw new Exception('only array, string or null is permitted');
+	}
+	
+	public function addDependance($dep){
+		if (is_array($dep)){
+			if ($this->dependance == null){
+				$this->dependance = $dep;
+			}else{
+				$this->dependance = array_unique(array_merge($this->dependance,$dep));
+			}
+		}else if (is_string($dep)){
+			if ($this->dependance == null) $this->dependance = array($dep);
+			else if (array_search($dep, $this->dependance) === false) array_push($this->dependance, $dep);
+		}else{
+			throw new Exception('only string or array is permitted');
+		}
+	}
+	
+	public function removeDependance($dep){
+		if (is_array($dep)){
+			if ($this->dependance != null){
+				$this->dependance = array_diff($this->dependance, $dep);
+			}
+		}else if (is_string($dep)){
+			if ($this->dependance != null){
+				$this->dependance = array_diff($this->dependance, array($dep));
+			}
+		}else{
+			throw new Exception('only string or array is permitted');
+		}
 	}
 	
 	public function get(&$content){
@@ -145,12 +176,12 @@ class CachePHP_Cache {
 		
 		$mtime = filemtime($this->cacheFilePath);
 		
-		if ($this->timeToInvalidate > 0){
-			if (time() - $mtime >= $this->timeToInvalidate) return false;
+		if ($this->deadLine > 0){
+			if (time() - $mtime >= $this->deadLine) return false;
 		}
 		
-		if ($this->dependFile != null){
-			foreach ($this->dependFile as $f){
+		if ($this->dependance != null){
+			foreach ($this->dependance as $f){
 				if ($mtime < @filemtime($f)) return false;
 			}
 		}

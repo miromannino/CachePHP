@@ -31,7 +31,7 @@
  */
 
 define('CachePHP_FileKeyPattern', '/^[0-9a-zA-Z-_]{1,50}$/');
-define('CachePHP_SubSectionPattern', '/^([0-9a-zA_Z-_]{1,20}\/)*([a-zA_Z-_.]{1,20})$/');
+define('CachePHP_SubSectionPattern', '/^([0-9a-zA-Z-_]{1,20}\/)*([a-zA-Z-_]{1,20})$/');
 
 /**
  * Tempo di vita dei file in cache, superato il tempo di vita il

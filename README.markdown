@@ -14,11 +14,13 @@ La classe per essere istanziata ha bisogno di un percorso che specifica il path 
 
 Ogni dato viene salvato su un **file di cache** che risiede dentro la cartella cachefolder. Tali file hanno un nome che viene specificato con un'opportuna funzione `setFileCache`.
 
-#### `setCacheFile($key [, $subsection = '' ])`
+#### `setCacheFile($key [, $subsection = '' ] [, $clear = true])`
 
  Il **`key`** rappresenta il nome che viene attribuito al file di cache. Se dobbiamo ad esempio salvate una pagina welcome.php possiamo usare come key "welcome", se invece abbiamo una pagina getChapter.php al quale gli si dice il capitolo da visionare _(ad esempio con una variabile get)_ allora la key non potrà essere solamente "chapter" ma ad esempio ("chapter" . $numeroCapitolo). 
 
 La **`subsection`** è un percorso del tipo nome1/nome2/.../nomeN. In questo modo si può specificare di non salvare il file di cache nella cartella principale della cache ma in una sottocartella in modo che sia possibile separare le diverse tipologie di file ed avere quindi anche la libertà di poter chiamare con la stessa key due file che si trovano in sezioni diverse.
+
+**Clear** serve per specificare se deve resettare le impostazioni di dipendenze e deadLine e invalid. Predefinito è true e quindi il setCacheFile setta a 0 il deadline e mette a null le dipendeze e a false il flag invalid
 
 Esempi:
 
@@ -64,7 +66,14 @@ Esempio:
 	$s->addDependance(array('prova1.txt', 'prova3.txt', 'prova4.txt'));
 	/* Dependance: ('prova2.txt', 'prova4.txt', 'prova1.txt', 'prova3.txt') */
 
-**Nota:** La funzione `setCacheFile` non setta a 0 il deadline nè svuota la lista delle dipendenze dei file
+#### invalid Flag
+
+Nel caso in cui l'invalidazione non dipendesse da un file o dal tempo è possibile specificare se il file è invalido usando la funzione **`setInvalid($v)`** che nel caso `$v` sia true fa in modo che tutte le volte che viene richiesto il file di cache si generi un cache miss e quindi in pratica fa in modo la get fallisca.
+
+Esempio:
+
+	if ($_GET['rigenera'] == true) $s->setInvalid(true);
+	$s->get($cont); //la get restituirà sicuramente false
 
 ### Get & Put
 

@@ -13,6 +13,8 @@
 	$s->removeDependance(array('prova1.txt', 'prova3.txt'));
 	$s->addDependance(array('prova1.txt', 'prova3.txt', 'prova4.txt'));
 	
+	//$s->setInvalid(true);
+	
 	/* Dependance: ('prova2.txt', 'prova4.txt', 'prova1.txt', 'prova3.txt') */
 	
 	/*
@@ -27,7 +29,7 @@
 	}
 	*/
 	
-	/*
+	
 	if($s->get($c)){
 		echo 'cache hit!<br/>';
 		echo $c;
@@ -37,10 +39,11 @@
 		echo time();
 		$s->endOutput();
 	}
-*/
 
+/*
 
 	if($s->printOrBegin()){
 		echo time();
 		$s->endOutput();
 	}?>
+*/

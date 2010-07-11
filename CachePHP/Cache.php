@@ -96,6 +96,13 @@ class CachePHP_Cache {
 	 */
 	private $dependance = null;
 	
+	/**
+	 * Se viene settato a true il file viene sempre dichiarato invalido
+	 * è utile per concatenare eventi come ad esempio il fatto che
+	 * un file è invalido se un'altra pagina ha generato cache miss.
+	 * */
+	private $invalid = false;
+	
 	/*----------------------------------------------------------------*/
 	
 	public function CachePHP_Cache($cacheFolder){
@@ -105,7 +112,7 @@ class CachePHP_Cache {
 		if ((time() - filemtime($this->cacheFolder)) > CachePHP_GCTime) $this->gc();
 	}
 	
-	public function setCacheFile($key, $subSection = null){
+	public function setCacheFile($key, $subSection = null, $clear = true){
 		if (!is_string($key) || !preg_match(CachePHP_FileKeyPattern, $key)){
 			throw new Exception('key is not a valid name');
 		}
@@ -119,12 +126,21 @@ class CachePHP_Cache {
 		$this->cacheFileFolderPath = $this->cacheFolder;
 		if ($subSection != null) $this->cacheFileFolderPath .= '/' . $subSection;
 		$this->cacheFilePath = $this->cacheFileFolderPath . '/' . $key;
+		if ($clear){
+			$this->dependance = null;
+			$this->deadLine = 0;
+			$this->invalid = false;
+		}
 		return true;
 	}
 	
 	public function setDeadLine($tti){
 		if ($tti < 0) throw new Exception('deadLine must be a valid time number');
 		$this->deadLine = $tti;
+	}
+	
+	public function setInvalid($v){
+		$this->invalid = ($v) ? true : false;
 	}
 	
 	public function setDependance($dep){
@@ -167,6 +183,8 @@ class CachePHP_Cache {
 		if ($this->cacheFilePath == null) throw new Exception('cacheFile is not set');
 		
 		clearstatcache();
+		
+		if ($this->invalid) return false;
 		
 		if (!file_exists($this->cacheFilePath)) return false;
 		

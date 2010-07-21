@@ -105,11 +105,13 @@ class CachePHP_Cache {
 	
 	/*----------------------------------------------------------------*/
 	
-	public function CachePHP_Cache($cacheFolder){
+	public function CachePHP_Cache($cacheFolder, $doGCCheck = true){
 		$cf = realpath($cacheFolder);
 		if (!file_exists($cf) | !is_dir($cf)) throw new Exception('cacheFolder path not valid');
 		$this->cacheFolder = preg_replace('/\/$/', '', $cf);
-		if ((time() - filemtime($this->cacheFolder)) > CachePHP_GCTime) $this->gc();
+		if ($doGCCheck){
+			if ((time() - filemtime($this->cacheFolder)) > CachePHP_GCTime) $this->gc();
+		}
 	}
 	
 	public function setCacheFile($key, $subSection = null, $clear = true){
@@ -251,7 +253,7 @@ class CachePHP_Cache {
 	
 	public function gc($ttl = CachePHP_TTL){
 		if ($ttl < 0) throw new Exception('timeToLive must be a valid time number');
-		if (!@touch($this->cacheFolder)) throw new Exception('cannot change the cache folder mtime');
+		if (!@touch($this->cacheFolder)) throw new Exception('cannot change the cache folder mtime:');
 		clearstatcache();
 		$this->gc_folder($this->cacheFolder, $ttl);
 	}

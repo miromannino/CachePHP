@@ -4,11 +4,13 @@ CachePHP
 Guide generali
 --------------
 
-### Istanziare la classe
+### Istanziare la classe `achePHP_Cache($cacheFolder [, $doGCCheck = true])`
 
 La classe per essere istanziata ha bisogno di un percorso che specifica il path della cartella usata per la cache. Tale cartella deve essere scrivibile.
 
 	$s = new CachePHP_Cache('cachefolder');
+
+Si può fare in modo che al momento dell'istanziazione della classe non venga fatto il controllo che stabilisce se eseguire o meno il garbage collector settando a `false` il secondo argomento. In questo modo, nel caso ci siano più istanze della classe nella stessa pagina, si può velocizzare la creazione della classe stessa.
 
 ### Specificare il file di cache
 

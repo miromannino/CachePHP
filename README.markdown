@@ -1,7 +1,7 @@
 CachePHP
 ===========
 
-Guide generali
+Fundamentals
 --------------
 
 ### Istantiate the class `CachePHP_Cache($cacheFolder [, $doGCCheck = true])`

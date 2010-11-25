@@ -1,17 +1,17 @@
 <?php
-	require("../CachePHP/Cache.php");
-	$s = new CachePHP_Cache("testcache");
-	if ($s == null) echo "df";
-	$s->setCacheFile('ciao', 'miro');
-	$s->setDeadLine(0);
+	require('../../lib/CachePHP/Cache.php');
+	$s = new CachePHP_Cache('testcache');
+	$s->setKey('miro/ciao');
+	$s->setDeadLine(5);
 	
-	$s->setDependance('prova1.txt');
+	/*$s->setDependance('prova1.txt');
 	$s->addDependance('prova2.txt');
 	$s->addDependance('prova1.txt');
 	$s->addDependance(array('prova3.txt', 'prova4.txt', 'prova1.txt'));
 	$s->removeDependance('prova1.txt');
 	$s->removeDependance(array('prova1.txt', 'prova3.txt'));
 	$s->addDependance(array('prova1.txt', 'prova3.txt', 'prova4.txt'));
+	*/
 	
 	//$s->setInvalid(true);
 	
@@ -29,14 +29,13 @@
 	}
 	*/
 	
-	
 	if($s->get($c)){
 		echo 'cache hit!<br/>';
 		echo $c;
 	}else{
 		echo 'cache miss!<br/>';
 		$s->beginOutput();
-		echo time();
+			echo time();
 		$s->endOutput();
 	}
 

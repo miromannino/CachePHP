@@ -4,98 +4,130 @@ CachePHP
 Guide generali
 --------------
 
-### Istanziare la classe `achePHP_Cache($cacheFolder [, $doGCCheck = true])`
+### Istantiate the class `CachePHP_Cache($cacheFolder [, $doGCCheck = true])`
 
-La classe per essere istanziata ha bisogno di un percorso che specifica il path della cartella usata per la cache. Tale cartella deve essere scrivibile.
+The class to be instantiated, it needs a path that specifies the path to the folder used for the cache.
+This folder must be writable.
 
 	$s = new CachePHP_Cache('cachefolder');
 
-Si può fare in modo che al momento dell'istanziazione della classe non venga fatto il controllo che stabilisce se eseguire o meno il garbage collector settando a `false` il secondo argomento. In questo modo, nel caso ci siano più istanze della classe nella stessa pagina, si può velocizzare la creazione della classe stessa.
+### Specify the key
 
-### Specificare il file di cache
+The key is that file that is saved in the cache folder. This key is specified by the **`setKey`** function.
+The key may just be a name or a path. Intuitively it should be a parameter in the constructor of the class but
+was chosen to implement it in this way in order to use the same instance of the class to work on different files
+each time without having to re-instantiate a new class again.
 
-Ogni dato viene salvato su un **file di cache** che risiede dentro la cartella cachefolder. Tali file hanno un nome che viene specificato con un'opportuna funzione `setFileCache`.
+#### `setKey($key [, $clear = true])`
 
-#### `setCacheFile($key [, $subsection = '' ] [, $clear = true])`
+The key is the name that is assigned to the file located in the cache and must be unique in some way to avoid
+causing collisions. If we for example save a page welcome.php we can use as a key "welcome", but if we have a
+page that shows a particular chapter getChapter.php then the key can not be only "chapter", but it should also
+include the chapter number. The key can still be a path, so you can separate the different types of files saved
+in different sections.
 
- Il **`key`** rappresenta il nome che viene attribuito al file di cache. Se dobbiamo ad esempio salvate una pagina welcome.php possiamo usare come key "welcome", se invece abbiamo una pagina getChapter.php al quale gli si dice il capitolo da visionare _(ad esempio con una variabile get)_ allora la key non potrà essere solamente "chapter" ma ad esempio ("chapter" . $numeroCapitolo). 
+Clear parameter is used to specify whether you need to reset the settings of dependency, deadline and invalid.
+The default value is true and by default the deadline is set to 0, addictions to null and invalid flag to false.
 
-La **`subsection`** è un percorso del tipo nome1/nome2/.../nomeN. In questo modo si può specificare di non salvare il file di cache nella cartella principale della cache ma in una sottocartella in modo che sia possibile separare le diverse tipologie di file ed avere quindi anche la libertà di poter chiamare con la stessa key due file che si trovano in sezioni diverse.
+Example:
 
-**Clear** serve per specificare se deve resettare le impostazioni di dipendenze e deadLine e invalid. Predefinito è true e quindi il setCacheFile setta a 0 il deadline e mette a null le dipendeze e a false il flag invalid
+	$s = new CachePHP_Cache('/path/to/cacheFolder');
 
-Esempi:
+	$s->setKey('welcome'); //Output will be saved to '/path/to/cacheFolder/welcome'
 
-	$s->setCacheFile('welcome'); //L'output verrà salvato in cacheFolder/welcome
+	$chapterNumber = 3;
+	$s->setKey("chapter" . $chapterNumber); //Output will be saved to '/path/to/cacheFolder/chapter3'
 
-	$numeroCapitolo = 3;
-	$s->setCacheFile("chapter" . $numeroCapitolo); //L'output verrà salvato in cacheFolder/chapter3
+	$s->setKey('html/welcome'); //Output will be saved to '/path/to/cacheFolder/html/welcome'
 
-	$s->setCacheFile('welcome', 'pag/html'); //L'output verrà salvato in cacheFolder/pag/html/welcome
-	
-E' possibile usando la stessa classe specificare un file usando questa funzione lavorarci e successivamente specificarne un altro.
-
-### Validità di un file
+### Key validity
 
 #### deadline
 
-Un file può avere un deadline, cioè avere un certo tempo di vita. Si pensi ad esempio ad una pagina che mostra le visite, essa dovrà essere aggiornata ogni volta che arriva un nuovo visitatore mentre è più efficente ad esempio che la pagina viene ricalcolata solo ogni ora. Un file di cache quindi può non essere più valido perchè ha superato il deadLine. Il deadLine viene scelto chiamando la funzione `setDeadLine($t)` dove `$t` è espresso in secondi. Un tempo 0 specifica che il file non ha deadline.
+A key may have a deadline, that have a certain life time. An example is a page that shows visits,
+it can be updated whenever a new visitor arrives while it is more efficient for example, that the
+page is recalculated once every hour. A key can then be no longer valid because the deadline has passed.
+The deadline is chosen by calling the function `setDeadLine($t)` where `$t` is in seconds.
+Value 0 specifies that the file has no deadline.
 
-Esempio:
+Example:
 
-	$s->setCacheFile('welcome');
-	$s->setDeadLine(3600); 	//Nel caso welcome sia più vecchio di un ora viene generato un cache miss
+	$s->setKey('welcome');
+	$s->setDeadLine(3600); 	//If welcome is older than one hour will generate a cache miss
 
 #### dependances
 
-Il file può anche dipendere da alcuni file e quindi in questo caso viene fatta l'ulteriore verifica che il file sia più recente dei file da cui dipende.
-Possiamo pensare ad esempio ad un menù che viene descritto con un file xml e trasformato con un file xsl, tale menù non ha quindi una scadenza temporale ma può rimanere sulla cache se i file xml e xsl non cambiano. La lista dei file viene modificata dalle funzioni **`setDependance`**, **`addDependance`** e **`removeDependance`**. Tutte queste funzioni accettano sia un array di stringhe che una stringa. `setDependance` inoltre accetta anche null nel caso si voglia svuotare la lista.
+The key may depend on some files and then the cache makes sure that the key is the latest of the file on which it depends.
+For example, a menu that is described in an xml file and transformed with a xsl file does not depend on time but may remain
+on the cache until you change the files on which it depends. The file list is changed by the functions **`setDependance`**, 
+**`addDependance`**, **`removeDependance`**. All these functions accept either a string or an array of strings.
+**`SetDependance`** also accepts null if you want to empty the list.
 
-Esempio:
+Example:
 
-	$s->setDependance('prova1.txt'); 
-	//Dependance: ('prova1.txt')
-	$s->addDependance('prova2.txt');
-	//Dependance: ('prova1.txt', 'prova2.txt')
-	$s->addDependance('prova1.txt');
-	//Dependance: ('prova1.txt', 'prova2.txt')
-	$s->addDependance(array('prova3.txt', 'prova4.txt', 'prova1.txt'));
-	//Dependance: ('prova1.txt', 'prova2.txt', 'prova3.txt', 'prova4.txt')
-	$s->removeDependance('prova1.txt');
-	//Dependance: ('prova2.txt', 'prova3.txt', 'prova4.txt')
-	$s->removeDependance(array('prova1.txt', 'prova3.txt'));
-	//Dependance: ('prova2.txt', 'prova4.txt')
-	$s->addDependance(array('prova1.txt', 'prova3.txt', 'prova4.txt'));
-	/* Dependance: ('prova2.txt', 'prova4.txt', 'prova1.txt', 'prova3.txt') */
+	$s->setDependance('test1.txt'); 
 
-#### invalid Flag
+	//Dependance: ('test1.txt')
 
-Nel caso in cui l'invalidazione non dipendesse da un file o dal tempo è possibile specificare se il file è invalido usando la funzione **`setInvalid($v)`** che nel caso `$v` sia true fa in modo che tutte le volte che viene richiesto il file di cache si generi un cache miss e quindi in pratica fa in modo la get fallisca.
+	$s->addDependance('test2.txt');
 
-Esempio:
+	//Dependance: ('test1.txt', 'test2.txt')
 
-	if ($_GET['rigenera'] == true) $s->setInvalid(true);
-	$s->get($cont); //la get restituirà sicuramente false
+	$s->addDependance('test1.txt');
+
+	//Dependance: ('test1.txt', 'test2.txt')
+
+	$s->addDependance(array('test3.txt', 'test4.txt', 'test1.txt'));
+
+	//Dependance: ('test1.txt', 'test2.txt', 'test3.txt', 'test4.txt')
+
+	$s->removeDependance('test1.txt');
+
+	//Dependance: ('test2.txt', 'test3.txt', 'test4.txt')
+
+	$s->removeDependance(array('test1.txt', 'test3.txt'));
+
+	//Dependance: ('test2.txt', 'test4.txt')
+
+	$s->addDependance(array('test1.txt', 'test3.txt', 'test4.txt'));
+
+	/* Dependance: ('test2.txt', 'test4.txt', 'test1.txt', 'test3.txt') */
+
+#### Invalid Flag
+
+In the event that the invalidation is not due to a file or from the time you can specify
+whether the key is no longer valid by using the function `** setInvalid ($ v )`**. If `$ v` is true
+requires a key will generate a cache miss.
+
+Example:
+
+	if ($_GET['regenerate'] == true) $s->setInvalid(true);
+	$s->get($cont); //get always return false
 
 ### Get & Put
 
-Una volta specificato il controllo tipico che viene fatto è: "se il file esiste ed è valido restituiscilo perchè altrimenti dovrò ricalcolarmi l'output".
-Quest'operazione viene fatta dalla **`get($content)`** che restituisce `true` se il file esiste in cache ed è valido o `false` nel caso non esista o non sia più valido. `$content` viene passata per riferimento, quindi nel caso in cui get restituisce `true` dentro $content c'è la stringa che contiene il file in cache. Nel caso in cui restituisce `false` `$content` non viene modificata.
+After you specify the dependencies of the key, the cache does this check: if the file exists and
+is valid return it because otherwise you will have to recalculate the output."
+This operation is done by **`get($content)`** that returns `true` if the key exists
+in cache and is valid or `false` in the case does not exist or is no longer valid.
+`$content` is passed by reference, so if get returns `true` in `$content` is the string that contains
+the contents of the key. In the event that returns `false` then `$content` is not changed.
 
-Nel caso la `get` restituisca `false` bisogna ricalcolarsi quindi l'output, una volta calcolato bisogna salvarlo con la funzione **`put($content)`**. Questa funzione salva nel file di cache specificato dalla key (e subsection) la stringa `$content`.
+If the `get` return `false` must re-calculate the output, once calculated can be saved with the
+function **`put($content)`**. This function saves the key that has the value of the string `$content`.
 
-Esempio:
+Example:
 
 	$s = new CachePHP_Cache('cachefolder');
-	$s->setCacheFile('welcome');
-	$s->setDeadLine(3600); 	//welcome fa vedere i visitatori, allora aggiorniamola solo ogni ora
-	$s->setDependance('welcome.html'); //nel caso comunque cambi welcome aggiorniamo subito
+	$s->setKey('welcome');
+	$s->setDeadLine(3600); //welcome page is valid only for an hour
+	$s->setDependance('welcome.html'); //if welcome.html change the welcome page will be changed
 	if($s->get($con)){
 		//cache hit
 		echo($con);
 	}else{
 		//cache miss
-		$out = trasformaHTML('welcome.html', "{ valorecontatore = '$numVisite' }");
+		$out = transformHTML('welcome.html', array('visitors' => $numVis));
 		$s->put($out);
 		echo($out);
 	}
@@ -104,39 +136,48 @@ Esempio:
 
 #### beginOutput & endOutput
 
-Nel caso non si voglia mettere tutto il contenuto dell'output su una variabile ma si voglia fare come al solito usando liberamente gli echo il put diventa debole, in questo caso esitono le funzioni **`beginOutput()`** e **`endOutput()`**. Naturalmente si capisce bene già dal nome cosa fanno.
+If you do not want to put all the contents output to a variable, but you want freely use the echo function,
+the `put` function becomes weak, in this case the functions **`beginOutput()`** and **`endOutput()`** will help you.
+Of course you already understand very well from the name what they do.
 
-Nell'esempio di prima l'ultima parte diventa:
+The above example becomes:
 	
 	if($s->get($con)){
+		//cache hit
 		echo($con);
 	}else{
+		//cache miss
 		$s->beginOutput();
-		echo trasformaHTML('welcome.html', "{ valorecontatore = '$numVisite' }");
+			echo transformHTML('welcome.html', array('visitors' => $numVis));
 		$s->endOutput();
 	}
 
-beginOutput non fa altro che impedire che gli echo vengano eseguiti e di conseguenza endOutput si ritrova nel buffer tutto l'output che può prendere, salvare e stampare.
+beginOutput divert the output to a temporary buffer and thereby endOutput print this buffer as a normal `echo` function.
 
 #### printOrBegin
 
-Rimane scomodo ripetere la prima parte dell'if che sostanzialmente è solamente un istruzione che stampa il contenuto ricevuto dalla `get`. Esiste quindi un'ulteriore funzione **`printOrBegin()`** che stampa il file in cache se esiste ed è valido e restituisce `false`, oppure non sampa niente e restituisce `true`. Questo permette di compattare il codice, l'esempio di prima diventa infatti:
+Remains inconvenient to repeat the first part of the `if` that is basically just a statement that print the
+contents with `get` function. So there is an additional function **`printOrBegin()`** that prints the contents
+if it exists and is valid by returning `false`, or doesn't print anything by returning `true`.
+This allows a new simple construct, the example above now can be written:
 
 	if($s->printOrBegin()){
-		echo trasformaHTML('welcome.html', "{ valorecontatore = '$numVisite' }");
+		echo transformHTML('welcome.html', array('visitors' => $numVis));
 		$s->endOutput();
 	}
 
 
 ### Garbage Collector
 
-Un file di cache dipende da un tempo di vita predefinito che fa in modo da non lasciare sulla cache sporcizia per molto tempo _(predefinito è 1 settimana)_. Il controllo che viene fatto per rimuovere i file più vecchi del tempo di vita viene svolto dal garbage collector ogni tanto _(predefinito dopo un giorno)_. Il controllo per capire se è passato sufficiente tempo per eseguire il garbage collector viene svolto al momento della creazione della classe CachePHP_Cache. Il garbage collector può comunque essere chiamato quando si vuole usando la funzione `gc($ttl)` ed eliminare quindi i file più vecchi di `ttl` tempo.
+A key depends on a default life time so as not to leave dirt on the cache folder with keys
+that are not used for a long time _(default is 1 week)_. The garbage collector are executed 
+sometimes _(default after a day)_. The check to see if enough time has passed to run the garbage
+collector is done when you istantiate the class. The garbage collector can also be called
+when you want using the function **`gc($ttl)`** that delete the keys older than `ttl` time.
 
-Esempi:
+Example:
 
-	$s->setCacheFile('welcome'); //se nessuno visualizza il sito da più di una settimana viene eseguito il gc
+	$s->gc(3600); //delete all keys older than an hour;
 
-	$s->gc(3600); //svuota tutti i file più vecchi di un ora;
-
-	$s->gc(0); //svuota tutta la cache
+	$s->gc(0); //delete all keys in cache
 

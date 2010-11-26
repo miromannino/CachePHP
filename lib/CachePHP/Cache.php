@@ -5,7 +5,7 @@
  * Author: Miro Mannino
  * */
 
-define('CachePHP_FileKeyPattern', '/^([a-zA-Z0-9-_]\/?)+$/');
+define('CachePHP_FileKeyPattern', '/^([a-zA-Z0-9-_\.]\/?)+$/');
 
 /**
  * Key lifetime
@@ -19,7 +19,7 @@ define('CachePHP_TTL', 604800); //a week
  * the allotted time. GC deletes all files older than TTL.
  * if it is 0 if the garbage collector is never executed
  */
-define('CachePHP_GCTime', 86400); //una giorno
+define('CachePHP_GCTime', 86400); //a day
 
 class CachePHP_Cache {
 	

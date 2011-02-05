@@ -19,7 +19,7 @@ define('CachePHP_TTL', 604800); //a week
  * the allotted time. GC deletes all files older than TTL.
  * if it is 0 if the garbage collector is never executed
  */
-define('CachePHP_GCTime', 86400); //a day
+define('CachePHP_GCTime', 86400); //una giorno
 
 class CachePHP_Cache {
 	
@@ -154,10 +154,10 @@ class CachePHP_Cache {
 		
 		$folder = dirname($this->cacheKey);
 		if(!file_exists($folder)){
-			if(! mkdir($folder, 0777, true)) throw new Exception('CachePHP: cannot write to cache folder');
+			if(! @mkdir($folder, 0777, true)) throw new Exception('CachePHP: cannot write to cache folder. Key: ' . $this->cacheKey);
 		}
 		
-		if(! @file_put_contents($this->cacheKey, $content, LOCK_EX)) throw new Exception('CachePHP: cannot write to cache folder');
+		if(FALSE === @file_put_contents($this->cacheKey, $content, LOCK_EX)) throw new Exception('CachePHP: cannot write to cache folder. Key: ' . $this->cacheKey);
 	}
 	
 	public function printOrBegin(){
